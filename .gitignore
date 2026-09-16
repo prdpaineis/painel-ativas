@@ -1,0 +1,10 @@
+# credenciais — nunca versionar
+.env
+*.env
+!.env.example
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/

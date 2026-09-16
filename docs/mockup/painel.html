@@ -1,0 +1,710 @@
+<title>Painel de Processos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#f3f1ea;
+    --surface:#fffdf8;
+    --surface-2:#ece8dc;
+    --border:#ddd7c6;
+    --ink:#20241f;
+    --ink-dim:#5b6259;
+    --muted:#83897e;
+    --accent:#37507e;
+    --accent-ink:#eef1f8;
+    --accent-soft:#e2e7f2;
+    --good:#276b4d;
+    --good-soft:#dbeee2;
+    --warn:#9a6a15;
+    --warn-soft:#f4e7cc;
+    --bad:#a3382c;
+    --bad-soft:#f5ded9;
+    --neutral-chip:#e7e4d7;
+    --shadow: 0 1px 2px rgba(32,36,31,.06), 0 6px 20px -12px rgba(32,36,31,.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#191b17;
+      --surface:#212420;
+      --surface-2:#282b25;
+      --border:#3a3d35;
+      --ink:#ece9df;
+      --ink-dim:#b8bcae;
+      --muted:#868c7d;
+      --accent:#8ba3d6;
+      --accent-ink:#141a26;
+      --accent-soft:#26314a;
+      --good:#7fceaa;
+      --good-soft:#1c3229;
+      --warn:#e0b45c;
+      --warn-soft:#3a2f14;
+      --bad:#e29a8d;
+      --bad-soft:#3a221d;
+      --neutral-chip:#31342c;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 24px -12px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#191b17;
+    --surface:#212420;
+    --surface-2:#282b25;
+    --border:#3a3d35;
+    --ink:#ece9df;
+    --ink-dim:#b8bcae;
+    --muted:#868c7d;
+    --accent:#8ba3d6;
+    --accent-ink:#141a26;
+    --accent-soft:#26314a;
+    --good:#7fceaa;
+    --good-soft:#1c3229;
+    --warn:#e0b45c;
+    --warn-soft:#3a2f14;
+    --bad:#e29a8d;
+    --bad-soft:#3a221d;
+    --neutral-chip:#31342c;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 24px -12px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    padding:28px 20px 60px;
+    font-variant-numeric: tabular-nums;
+  }
+  .wrap{max-width:1180px;margin:0 auto;}
+
+  header.page{
+    display:flex; flex-wrap:wrap; gap:16px;
+    align-items:flex-end; justify-content:space-between;
+    padding-bottom:22px; margin-bottom:20px;
+    border-bottom:1px solid var(--border);
+  }
+  .titlebox h1{
+    font-family:'Fraunces', Georgia, serif;
+    font-weight:600;
+    font-size:clamp(26px,4vw,34px);
+    margin:0 0 4px;
+    text-wrap:balance;
+    letter-spacing:-.01em;
+  }
+  .titlebox .sub{color:var(--ink-dim); font-size:14px;}
+  .meta{
+    text-align:right; font-size:12.5px; color:var(--muted);
+    line-height:1.5;
+  }
+  .meta b{color:var(--ink-dim); font-weight:600;}
+
+  /* tabs = uma carteira por vez, nunca misturadas */
+  .tabbar{
+    display:flex; gap:6px; margin-bottom:32px; flex-wrap:wrap;
+    border-bottom:1px solid var(--border);
+  }
+  .tab{
+    appearance:none; border:none; background:transparent; cursor:pointer;
+    font-family:'IBM Plex Sans', sans-serif; font-size:14.5px; font-weight:600;
+    color:var(--muted); padding:10px 16px 12px; border-bottom:2px solid transparent;
+    margin-bottom:-1px; display:flex; align-items:center; gap:8px;
+    transition:color .12s ease, border-color .12s ease;
+  }
+  .tab:hover{color:var(--ink-dim);}
+  .tab .n{
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; font-weight:600;
+    background:var(--neutral-chip); color:var(--ink-dim);
+    border-radius:20px; padding:1px 7px;
+  }
+  .tab.active{color:var(--ink); border-bottom-color:var(--accent);}
+  .tab.active .n{background:var(--accent-soft); color:var(--accent);}
+
+  h2.section-title{
+    font-family:'Fraunces', Georgia, serif;
+    font-weight:500;
+    font-size:19px;
+    margin:0 0 14px;
+    letter-spacing:-.005em;
+  }
+  section{margin-bottom:38px;}
+
+  /* KPI row */
+  .kpi-row{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:12px;
+  }
+  @media (max-width:980px){ .kpi-row{grid-template-columns:repeat(3,1fr);} }
+  @media (max-width:600px){ .kpi-row{grid-template-columns:repeat(2,1fr);} }
+  .kpi{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:16px 18px;
+    box-shadow:var(--shadow);
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .kpi .label{
+    font-size:11.5px; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--muted); font-weight:600;
+  }
+  .kpi .value{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:32px; font-weight:600; line-height:1;
+    color:var(--ink);
+  }
+  .kpi .delta{font-size:12.5px; color:var(--ink-dim);}
+  .kpi .delta.up{color:var(--good);}
+  .kpi .delta.flag{color:var(--bad);}
+
+  /* trend chart */
+  .chart-card{
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:20px 22px 14px; box-shadow:var(--shadow);
+  }
+  .legend{display:flex; gap:18px; margin-bottom:6px; flex-wrap:wrap;}
+  .legend span{font-size:12.5px; color:var(--ink-dim); display:flex; align-items:center; gap:6px;}
+  .legend i{width:10px;height:10px;border-radius:2px;display:inline-block;}
+
+  /* breakdown grid */
+  .breakdown-grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:12px;
+  }
+  @media (max-width:900px){ .breakdown-grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:520px){ .breakdown-grid{grid-template-columns:1fr;} }
+  .panel{
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:16px 16px 14px; box-shadow:var(--shadow);
+  }
+  .panel h3{
+    margin:0 0 10px; font-size:12.5px; text-transform:uppercase;
+    letter-spacing:.06em; color:var(--muted); font-weight:600;
+  }
+  .bar-row{
+    display:grid; grid-template-columns:1fr auto; gap:2px 10px;
+    align-items:center; font-size:13px; padding:4px 0;
+  }
+  .bar-row .lbl{color:var(--ink-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .bar-row .num{font-family:'IBM Plex Mono',monospace; font-weight:600; text-align:right;}
+  .bar-track{grid-column:1/-1; height:6px; background:var(--surface-2); border-radius:3px; overflow:hidden;}
+  .bar-fill{height:100%; background:var(--accent); border-radius:3px;}
+  .bar-fill.good{background:var(--good);}
+  .bar-fill.warn{background:var(--warn);}
+  .bar-fill.bad{background:var(--bad);}
+  .panel .empty{color:var(--muted); font-size:12.5px; padding:6px 0;}
+
+  .insight{
+    display:flex; gap:12px; align-items:flex-start;
+    background:var(--warn-soft); border:1px solid var(--border);
+    border-radius:10px; padding:14px 16px; font-size:13.5px;
+    color:var(--ink); line-height:1.5; margin-bottom:20px;
+  }
+  .insight.ok{background:var(--good-soft);}
+  .insight b{color:var(--warn);}
+  .insight.ok b{color:var(--good);}
+  .insight .ico{font-family:'Fraunces',serif; font-weight:600; font-size:18px; color:var(--warn); line-height:1;}
+  .insight.ok .ico{color:var(--good);}
+
+  /* table */
+  .table-controls{
+    display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; align-items:center;
+  }
+  .table-controls input[type="search"]{
+    flex:1; min-width:180px;
+    background:var(--surface); border:1px solid var(--border); color:var(--ink);
+    border-radius:8px; padding:9px 12px; font-size:13.5px; font-family:inherit;
+  }
+  .table-controls select{
+    background:var(--surface); border:1px solid var(--border); color:var(--ink);
+    border-radius:8px; padding:9px 10px; font-size:13px; font-family:inherit;
+  }
+  .table-controls .count{font-size:12.5px; color:var(--muted); margin-left:auto;}
+  .table-wrap{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    box-shadow:var(--shadow); overflow:auto; max-height:640px;
+  }
+  table{border-collapse:collapse; width:100%; font-size:13px;}
+  thead th{
+    position:sticky; top:0; background:var(--surface-2); text-align:left;
+    padding:10px 12px; font-size:11px; text-transform:uppercase; letter-spacing:.05em;
+    color:var(--muted); border-bottom:1px solid var(--border); white-space:nowrap;
+    cursor:pointer; user-select:none;
+  }
+  thead th:hover{color:var(--ink-dim);}
+  tbody td{
+    padding:9px 12px; border-bottom:1px solid var(--border); vertical-align:top;
+    color:var(--ink-dim); white-space:nowrap;
+  }
+  tbody tr:hover{background:var(--surface-2);}
+  td.mono, .mono{font-family:'IBM Plex Mono',monospace; font-size:12.3px;}
+  td.strong{color:var(--ink); font-weight:500;}
+  .chip{
+    display:inline-block; padding:2px 8px; border-radius:20px; font-size:11.5px;
+    font-weight:600; white-space:nowrap;
+  }
+  .chip.good{background:var(--good-soft); color:var(--good);}
+  .chip.warn{background:var(--warn-soft); color:var(--warn);}
+  .chip.bad{background:var(--bad-soft); color:var(--bad);}
+  .chip.neutral{background:var(--neutral-chip); color:var(--ink-dim);}
+  .chip.accent{background:var(--accent-soft); color:var(--accent);}
+
+  footer{
+    margin-top:30px; padding-top:16px; border-top:1px solid var(--border);
+    font-size:12px; color:var(--muted); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="page">
+    <div class="titlebox">
+      <h1>Painel de Processos</h1>
+      <div class="sub">juridico_escritorio &middot; Odoo &middot; leitura via agente.escritorio</div>
+    </div>
+    <div class="meta" id="meta-box">
+      <div><b id="meta-total">—</b> casos ativos</div>
+      <div>Fotografia de 15/09/2026</div>
+    </div>
+  </header>
+
+  <nav class="tabbar" id="tabbar"></nav>
+
+  <section>
+    <h2 class="section-title" id="kpi-title">Mês corrente</h2>
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="label">Entraram no mês</div>
+        <div class="value" id="kpi-entrada">—</div>
+        <div class="delta" id="kpi-entrada-delta"></div>
+      </div>
+      <div class="kpi">
+        <div class="label">Distribuídos no mês</div>
+        <div class="value" id="kpi-distrib">—</div>
+        <div class="delta" id="kpi-distrib-delta"></div>
+      </div>
+      <div class="kpi">
+        <div class="label">Citados no mês</div>
+        <div class="value" id="kpi-citados">—</div>
+        <div class="delta" id="kpi-citados-delta"></div>
+      </div>
+      <div class="kpi">
+        <div class="label">Sem número de processo</div>
+        <div class="value" id="kpi-semnum">—</div>
+        <div class="delta" id="kpi-semnum-delta"></div>
+      </div>
+      <div class="kpi">
+        <div class="label">Movimentações não lidas</div>
+        <div class="value" id="kpi-naolidas">—</div>
+        <div class="delta" id="kpi-naolidas-delta"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Entrada &times; distribuição, por mês</h2>
+    <div class="chart-card">
+      <div class="legend">
+        <span><i style="background:var(--accent)"></i>Entraram (criados)</span>
+        <span><i style="background:var(--good)"></i>Distribuídos</span>
+      </div>
+      <svg id="trend" viewBox="0 0 900 220" style="width:100%; height:220px; overflow:visible;"></svg>
+    </div>
+  </section>
+
+  <section>
+    <div class="insight" id="insight-box">
+      <div class="ico">!</div>
+      <div id="insight-text"></div>
+    </div>
+  </section>
+
+  <section id="section-naolidas">
+    <h2 class="section-title" id="naolidas-title">Movimentações não lidas</h2>
+    <div class="table-wrap" style="max-height:360px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Caso</th>
+            <th>Tipo</th>
+            <th>Origem</th>
+            <th>Data da movimentação</th>
+            <th>Criada em</th>
+            <th>Há quanto tempo</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-naolidas"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">Situação atual da carteira</h2>
+    <div class="breakdown-grid">
+      <div class="panel" id="panel-fase"><h3>Por fase</h3></div>
+      <div class="panel" id="panel-situacao"><h3>Por situação (top 8)</h3></div>
+      <div class="panel" id="panel-via"><h3>Por via processual</h3></div>
+      <div class="panel" id="panel-triagem"><h3>Triagem de documentos</h3></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title" id="table-title">Todos os casos</h2>
+    <div class="table-controls">
+      <input type="search" id="q" placeholder="Buscar por referência, comarca, processo…">
+      <select id="f-fase"><option value="">Fase — todas</option></select>
+      <select id="f-via"><option value="">Via — todas</option></select>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-k="n">Referência</th>
+            <th data-k="proc">Processo Nº</th>
+            <th data-k="fase">Fase</th>
+            <th data-k="sit">Situação</th>
+            <th data-k="via">Via</th>
+            <th data-k="com">Comarca/UF</th>
+            <th data-k="dist">Distribuído</th>
+            <th data-k="cit">Citado</th>
+            <th data-k="valor">Valor da causa</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <span>Fonte: Odoo (banco <code class="mono">odoo</code>), módulo juridico_escritorio &middot; usuário agente.escritorio (leitura)</span>
+    <span>Fotografia estática — peça uma atualização para recarregar os números</span>
+  </footer>
+
+</div>
+
+<script src="data.js"></script>
+<script src="mov.js"></script>
+<script>
+(function(){
+  const MONTH_ABBR = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const TIPO_LABELS = {
+    andamento:'Andamento', publicacao:'Publicação', despacho:'Despacho',
+    decisao:'Decisão', sentenca:'Sentença', acordao:'Acórdão',
+  };
+  const ORIGEM_LABELS = {api_tj:'API Tribunal', dje:'DJe', manual:'Manual', robo:'Robô/RPA'};
+  const TRIAGEM_META = {
+    incompleto:      {label:'Documentos faltando', tone:'warn'},
+    erro:             {label:'Erro',                tone:'bad'},
+    processando:      {label:'Processando',         tone:'neutral'},
+    feita:            {label:'Completa',            tone:'good'},
+    sem_documentos:   {label:'Sem documentos',      tone:'bad'},
+    pendente:         {label:'Pendente',            tone:'neutral'},
+  };
+
+  function monthKey(dateStr){ return dateStr ? dateStr.slice(0,7) : null; }
+  function monthLabel(key){
+    const [y,m] = key.split('-');
+    return MONTH_ABBR[parseInt(m,10)-1] + '/' + y.slice(2);
+  }
+  function prevMonthKey(key){
+    let [y,m] = key.split('-').map(Number);
+    m -= 1; if(m===0){ m=12; y-=1; }
+    return y + '-' + String(m).padStart(2,'0');
+  }
+  function fmtMoney(v){
+    if(!v) return '—';
+    return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+  }
+  function fmtDate(d){
+    if(!d) return '—';
+    return d.slice(0,10).split('-').reverse().join('/');
+  }
+  function fmtDateTime(dt){
+    if(!dt) return '—';
+    const [d,t] = dt.split(' ');
+    return d.slice(0,10).split('-').reverse().join('/') + ' ' + (t? t.slice(0,5) : '');
+  }
+  // create_date do Odoo vem em UTC; o navegador entende ISO com "Z"
+  function toDate(dt){ return new Date(dt.replace(' ', 'T') + 'Z'); }
+  function elapsed(dt){
+    const ms = Date.now() - toDate(dt).getTime();
+    const min = Math.floor(ms/60000);
+    if(min < 60) return `há ${Math.max(min,0)} min`;
+    const h = Math.floor(min/60);
+    if(h < 24) return `há ${h} h`;
+    const d = Math.floor(h/24);
+    return `há ${d} dia${d===1?'':'s'}`;
+  }
+
+  // movimentações por cliente (junção já feita no mov.js via caso_id)
+  const movByClient = new Map();
+  (typeof MOVS !== 'undefined' ? MOVS : []).forEach(m=>{
+    const key = m.cli || '— sem cliente —';
+    if(!movByClient.has(key)) movByClient.set(key, []);
+    movByClient.get(key).push(m);
+  });
+
+  // mês de referência: o mais recente com casos criados, em toda a base
+  const allMonthKeys = CASES.map(c=>monthKey(c.criado)).filter(Boolean).sort();
+  const currentMonthKey = allMonthKeys[allMonthKeys.length-1];
+  const previousMonthKey = prevMonthKey(currentMonthKey);
+
+  // clientes, maior carteira primeiro
+  const byClient = new Map();
+  CASES.forEach(c=>{
+    const key = c.cli || '— sem cliente —';
+    if(!byClient.has(key)) byClient.set(key, []);
+    byClient.get(key).push(c);
+  });
+  const clients = [...byClient.entries()].sort((a,b)=>b[1].length-a[1].length);
+
+  function countBy(rows, keyFn){
+    const m = new Map();
+    rows.forEach(r=>{
+      const k = keyFn(r);
+      if(k==null) return;
+      m.set(k, (m.get(k)||0)+1);
+    });
+    return m;
+  }
+
+  function buildAgg(rows){
+    const total = rows.length;
+    const semNumero = rows.filter(c=>!c.proc).length;
+
+    const entradaM = countBy(rows, c=>monthKey(c.criado));
+    const distribM = countBy(rows, c=>monthKey(c.dist));
+    const citadoM  = countBy(rows, c=>monthKey(c.cit));
+
+    const monthsToShow = [prevMonthKey(previousMonthKey), previousMonthKey, currentMonthKey];
+    const entradaSeries = monthsToShow.map(k=>[monthLabel(k), entradaM.get(k)||0]);
+    const distribSeries = monthsToShow.map(k=>[monthLabel(k), distribM.get(k)||0]);
+
+    const entradaMes = entradaM.get(currentMonthKey)||0;
+    const entradaMesAnt = entradaM.get(previousMonthKey)||0;
+    const distribMes = distribM.get(currentMonthKey)||0;
+    const distribMesAnt = distribM.get(previousMonthKey)||0;
+    const citadoMes = citadoM.get(currentMonthKey)||0;
+    const citadoTotal = rows.filter(c=>c.cit).length;
+    const distribTotal = rows.filter(c=>c.dist).length;
+
+    const faseM = countBy(rows, c=>c.fase);
+    const fase = [...faseM.entries()].sort((a,b)=>b[1]-a[1]);
+
+    const sitM = countBy(rows, c=>c.sit);
+    const situacao = [...sitM.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
+
+    const viaLabels = {monitoria:'Monitória', cobranca:'Cobrança', execucao:'Execução'};
+    const viaM = countBy(rows, c=>c.via);
+    const via = [...viaM.entries()].sort((a,b)=>b[1]-a[1]).map(([k,v])=>[viaLabels[k]||k, v]);
+
+    const triM = countBy(rows, c=>c.triagem);
+    const triagem = [...triM.entries()].sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
+      const meta = TRIAGEM_META[k] || {label:k, tone:''};
+      return [meta.label, v, meta.tone];
+    });
+
+    // aguardando citação, olhando a situação (para o insight)
+    const aguardandoCitacao = rows.filter(c=>(c.sit||'').toLowerCase().includes('aguardando citação')).length;
+
+    return {
+      total, semNumero,
+      entradaSeries, distribSeries,
+      entradaMes, entradaMesAnt, distribMes, distribMesAnt, citadoMes, citadoTotal, distribTotal,
+      fase, situacao, via, triagem, aguardandoCitacao,
+    };
+  }
+
+  // ---- trend chart (grouped bars, SVG) ----
+  function drawTrend(agg){
+    const svg = document.getElementById('trend');
+    const W=900,H=220, padL=40, padB=28, padT=10, padR=10;
+    const months = agg.entradaSeries.map(d=>d[0]);
+    const maxV = Math.max(1, ...agg.entradaSeries.map(d=>d[1]), ...agg.distribSeries.map(d=>d[1]));
+    const plotW = W-padL-padR, plotH = H-padT-padB;
+    const groupW = plotW/months.length;
+    const barW = groupW*0.28;
+    const ink = getComputedStyle(document.documentElement).getPropertyValue('--ink-dim').trim();
+    const grid = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
+    let s = '';
+    const steps=4;
+    for(let i=0;i<=steps;i++){
+      const v = Math.round(maxV/steps*i);
+      const y = padT + plotH - (v/maxV)*plotH;
+      s += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="${grid}" stroke-width="1"/>`;
+      s += `<text x="${padL-8}" y="${y+4}" text-anchor="end" font-size="11" fill="${ink}" font-family="IBM Plex Mono, monospace">${v}</text>`;
+    }
+    months.forEach((m,i)=>{
+      const gx = padL + i*groupW + groupW/2;
+      const v1 = agg.entradaSeries[i][1], v2 = agg.distribSeries[i][1];
+      const h1 = (v1/maxV)*plotH, h2=(v2/maxV)*plotH;
+      const x1 = gx - barW - 4, x2 = gx + 4;
+      const y1 = padT+plotH-h1, y2 = padT+plotH-h2;
+      s += `<rect x="${x1}" y="${y1}" width="${barW}" height="${h1}" rx="3" fill="var(--accent)"/>`;
+      s += `<rect x="${x2}" y="${y2}" width="${barW}" height="${h2}" rx="3" fill="var(--good)"/>`;
+      s += `<text x="${x1+barW/2}" y="${y1-6}" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--accent)" font-family="IBM Plex Mono, monospace">${v1}</text>`;
+      s += `<text x="${x2+barW/2}" y="${y2-6}" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--good)" font-family="IBM Plex Mono, monospace">${v2}</text>`;
+      s += `<text x="${gx}" y="${H-8}" text-anchor="middle" font-size="12" fill="${ink}">${m}</text>`;
+    });
+    svg.innerHTML = s;
+  }
+
+  function renderPanel(id, rows){
+    const el = document.getElementById(id);
+    const title = el.querySelector('h3').outerHTML;
+    if(!rows.length){
+      el.innerHTML = title + '<div class="empty">Sem dados nesta carteira.</div>';
+      return;
+    }
+    const max = Math.max(...rows.map(r=>r[1]));
+    let html = title;
+    rows.forEach(r=>{
+      const [label, val, tone] = r;
+      const pct = max? (val/max*100) : 0;
+      html += `<div class="bar-row">
+        <span class="lbl" title="${label}">${label}</span>
+        <span class="num">${val}</span>
+        <div class="bar-track"><div class="bar-fill ${tone||''}" style="width:${pct}%"></div></div>
+      </div>`;
+    });
+    el.innerHTML = html;
+  }
+
+  // ---- tabela (estado por aba) ----
+  const tbody = document.getElementById('tbody');
+  const qEl = document.getElementById('q');
+  const fFase = document.getElementById('f-fase');
+  const fVia = document.getElementById('f-via');
+  const countEl = document.getElementById('count');
+  let sortKey='criado', sortDir=-1;
+  let currentRows = [];
+
+  function applyTable(){
+    const q = qEl.value.trim().toLowerCase();
+    const ff = fFase.value, fv = fVia.value;
+    let rows = currentRows.filter(c=>{
+      if(ff && c.fase!==ff) return false;
+      if(fv && c.via!==fv) return false;
+      if(!q) return true;
+      return [c.n,c.proc,c.com,c.uf,c.adv].some(v=>v && String(v).toLowerCase().includes(q));
+    });
+    rows.sort((a,b)=>{
+      let av=a[sortKey], bv=b[sortKey];
+      if(av==null) av=''; if(bv==null) bv='';
+      if(av>bv) return sortDir;
+      if(av<bv) return -sortDir;
+      return 0;
+    });
+    countEl.textContent = rows.length + ' de ' + currentRows.length + ' casos';
+    tbody.innerHTML = rows.slice(0,300).map(c=>`
+      <tr>
+        <td class="strong">${c.n}</td>
+        <td class="mono">${c.proc || '—'}</td>
+        <td>${c.fase || '—'}</td>
+        <td>${c.sit || '—'}</td>
+        <td>${c.via || '—'}</td>
+        <td>${[c.com,c.uf].filter(Boolean).join(' / ') || '—'}</td>
+        <td class="mono">${fmtDate(c.dist)}</td>
+        <td class="mono">${fmtDate(c.cit)}</td>
+        <td class="mono">${fmtMoney(c.valor)}</td>
+      </tr>`).join('');
+  }
+  qEl.addEventListener('input', applyTable);
+  fFase.addEventListener('change', applyTable);
+  fVia.addEventListener('change', applyTable);
+  document.querySelectorAll('thead th[data-k]').forEach(th=>{
+    th.addEventListener('click', ()=>{
+      const k = th.dataset.k;
+      if(sortKey===k) sortDir*=-1; else {sortKey=k; sortDir=1;}
+      applyTable();
+    });
+  });
+
+  function delta(curr, prev){
+    if(prev===0 && curr===0) return `sem casos em ${monthLabel(previousMonthKey)}`;
+    if(curr>prev) return `<span class="up">↑ de ${prev} em ${monthLabel(previousMonthKey)}</span>`;
+    if(curr<prev) return `<span class="flag">↓ de ${prev} em ${monthLabel(previousMonthKey)}</span>`;
+    return `estável, igual a ${monthLabel(previousMonthKey)}`;
+  }
+
+  function renderClient(name){
+    const rows = byClient.get(name);
+    const agg = buildAgg(rows);
+    currentRows = rows;
+
+    document.getElementById('meta-total').textContent = agg.total;
+    document.getElementById('kpi-title').textContent = `${monthLabel(currentMonthKey)} até agora — ${name}`;
+
+    document.getElementById('kpi-entrada').textContent = agg.entradaMes;
+    document.getElementById('kpi-entrada-delta').innerHTML = delta(agg.entradaMes, agg.entradaMesAnt);
+    document.getElementById('kpi-distrib').textContent = agg.distribMes;
+    document.getElementById('kpi-distrib-delta').innerHTML = delta(agg.distribMes, agg.distribMesAnt);
+    document.getElementById('kpi-citados').textContent = agg.citadoMes;
+    document.getElementById('kpi-citados-delta').innerHTML = agg.citadoTotal===0
+      ? '<span class="flag">nenhum caso citado ainda</span>'
+      : `${agg.citadoTotal} citados ao todo`;
+    document.getElementById('kpi-semnum').textContent = agg.semNumero;
+    document.getElementById('kpi-semnum-delta').textContent = agg.total
+      ? Math.round(agg.semNumero/agg.total*100) + '% do total desta carteira' : '';
+
+    const movs = movByClient.get(name) || [];
+    const naoLidas = movs.filter(m=>!m.lida).sort((a,b)=>a.criado < b.criado ? 1 : -1);
+    document.getElementById('kpi-naolidas').textContent = naoLidas.length;
+    document.getElementById('kpi-naolidas-delta').textContent = naoLidas.length
+      ? 'mais antiga ' + elapsed(naoLidas[naoLidas.length-1].criado)
+      : 'tudo em dia';
+    document.getElementById('naolidas-title').textContent = `Movimentações não lidas — ${name}`;
+    const tbNaoLidas = document.getElementById('tbody-naolidas');
+    tbNaoLidas.innerHTML = naoLidas.length ? naoLidas.map(m=>`
+      <tr>
+        <td class="strong">${m.ref || '—'}</td>
+        <td><span class="chip warn">${TIPO_LABELS[m.tipo] || m.tipo}</span></td>
+        <td>${ORIGEM_LABELS[m.origem] || m.origem}</td>
+        <td class="mono">${fmtDate(m.data)}</td>
+        <td class="mono">${fmtDateTime(m.criado)}</td>
+        <td class="mono">${elapsed(m.criado)}</td>
+      </tr>`).join('') : `<tr><td colspan="6" class="empty" style="white-space:normal;">Nenhuma movimentação pendente de leitura nesta carteira.</td></tr>`;
+
+    drawTrend(agg);
+
+    const insightBox = document.getElementById('insight-box');
+    const insightText = document.getElementById('insight-text');
+    if(agg.citadoTotal===0){
+      insightBox.className = 'insight';
+      insightText.innerHTML = `<b>Nenhum caso citado até agora nesta carteira.</b> ${agg.aguardandoCitacao} caso(s) já constam como “aguardando citação” e ${agg.distribTotal} já foram distribuídos — a citação é o gargalo a acompanhar aqui, não a distribuição.`;
+    } else {
+      insightBox.className = 'insight ok';
+      insightText.innerHTML = `<b>${agg.citadoTotal} caso(s) já citados</b> nesta carteira, de ${agg.distribTotal} distribuídos. ${agg.aguardandoCitacao} ainda aguardam citação.`;
+    }
+
+    renderPanel('panel-fase', agg.fase);
+    renderPanel('panel-situacao', agg.situacao);
+    renderPanel('panel-via', agg.via);
+    renderPanel('panel-triagem', agg.triagem);
+
+    document.getElementById('table-title').textContent = `Todos os casos — ${name}`;
+
+    fFase.innerHTML = '<option value="">Fase — todas</option>';
+    fVia.innerHTML = '<option value="">Via — todas</option>';
+    [...new Set(rows.map(c=>c.fase).filter(Boolean))].sort().forEach(f=>
+      fFase.insertAdjacentHTML('beforeend', `<option value="${f}">${f}</option>`));
+    [...new Set(rows.map(c=>c.via).filter(Boolean))].sort().forEach(v=>
+      fVia.insertAdjacentHTML('beforeend', `<option value="${v}">${v}</option>`));
+    qEl.value = '';
+    applyTable();
+
+    document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.client===name));
+  }
+
+  // ---- tabbar ----
+  const tabbar = document.getElementById('tabbar');
+  clients.forEach(([name, rows])=>{
+    const btn = document.createElement('button');
+    btn.className = 'tab';
+    btn.dataset.client = name;
+    btn.innerHTML = `${name} <span class="n">${rows.length}</span>`;
+    btn.addEventListener('click', ()=>renderClient(name));
+    tabbar.appendChild(btn);
+  });
+
+  renderClient(clients[0][0]);
+})();
+</script>
