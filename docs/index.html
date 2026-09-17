@@ -261,7 +261,7 @@
     </div>
     <div class="meta" id="meta-box">
       <div><b id="meta-total">—</b> casos ativos</div>
-      <div>Fotografia de 15/09/2026</div>
+      <div>Fotografia de <span id="meta-fotografia">—</span></div>
     </div>
   </header>
 
@@ -433,6 +433,9 @@
     const d = Math.floor(h/24);
     return `há ${d} dia${d===1?'':'s'}`;
   }
+
+  document.getElementById('meta-fotografia').textContent =
+    typeof GERADO_EM !== 'undefined' ? GERADO_EM : '—';
 
   // movimentações por cliente (junção já feita no mov.js via caso_id)
   const movByClient = new Map();

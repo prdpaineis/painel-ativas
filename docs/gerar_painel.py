@@ -14,7 +14,9 @@ nesta pasta) ou publicar o conteúdo como Artifact.
 import json
 import os
 import xmlrpc.client
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from dotenv import load_dotenv
 
@@ -95,6 +97,11 @@ def build_cases_js(cases):
     return "const CASES = " + json.dumps(out, ensure_ascii=False, separators=(",", ":")) + ";\n"
 
 
+def build_meta_js():
+    agora = datetime.now(ZoneInfo("America/Sao_Paulo"))
+    return "const GERADO_EM = " + json.dumps(agora.strftime("%d/%m/%Y %H:%M")) + ";\n"
+
+
 def build_movs_js(movs, case_by_id):
     out = []
     for m in movs:
@@ -122,7 +129,7 @@ def main():
     call = connect()
 
     cases = fetch_all(call, "juridico.caso", [("active", "=", True)], CASE_FIELDS)
-    (BASE_DIR / "data.js").write_text(build_cases_js(cases), encoding="utf-8")
+    (BASE_DIR / "data.js").write_text(build_cases_js(cases) + build_meta_js(), encoding="utf-8")
 
     movs = fetch_all(call, "juridico.movimentacao", [("active", "=", True)], MOV_FIELDS)
     case_by_id = {c["id"]: c for c in cases}
